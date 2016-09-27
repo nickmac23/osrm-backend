@@ -1,5 +1,5 @@
-#include "extractor/guidance/intersection_handler.hpp"
 #include "extractor/guidance/constants.hpp"
+#include "extractor/guidance/intersection_handler.hpp"
 #include "extractor/guidance/toolkit.hpp"
 
 #include "util/coordinate_calculation.hpp"
@@ -68,6 +68,17 @@ TurnType::Enum IntersectionHandler::findBasicTurnType(const EdgeID via_edge,
     return TurnType::Turn;
 }
 
+TurnInstruction IntersectionHandler::notificationOnModeChange(const TravelMode in_mode,
+                                                              const TravelMode out_mode,
+                                                              const double turnAngle,
+                                                              const TurnType::Enum alternative) const
+{
+    if (in_mode == out_mode)
+        return {alternative, getTurnDirection(turnAngle)};
+    else
+        return {TurnType::Notification, getTurnDirection(turnAngle)};
+}
+
 TurnInstruction IntersectionHandler::getInstructionForObvious(const std::size_t num_roads,
                                                               const EdgeID via_edge,
                                                               const bool through_street,
@@ -110,10 +121,7 @@ TurnInstruction IntersectionHandler::getInstructionForObvious(const std::size_t 
                 else if (in_data.road_classification.IsRampClass() &&
                          out_data.road_classification.IsRampClass())
                 {
-                    if (in_mode == out_mode)
-                        return {TurnType::Suppressed, getTurnDirection(road.turn.angle)};
-                    else
-                        return {TurnType::Notification, getTurnDirection(road.turn.angle)};
+                    return notificationOnModeChange(in_mode, out_mode, road.turn.angle, TurnType::Suppressed);
                 }
                 else
                 {
@@ -140,18 +148,13 @@ TurnInstruction IntersectionHandler::getInstructionForObvious(const std::size_t 
             }
             else
             {
-                if (in_mode == out_mode)
-                    return {TurnType::NewName, getTurnDirection(road.turn.angle)};
-                else
-                    return {TurnType::Notification, getTurnDirection(road.turn.angle)};
+                return notificationOnModeChange(in_mode, out_mode, road.turn.angle, TurnType::NewName);
             }
         }
+        // name has not changed, suppress a turn here or indicate mode change
         else
         {
-            if (in_mode == out_mode)
-                return {TurnType::Suppressed, getTurnDirection(road.turn.angle)};
-            else
-                return {TurnType::Notification, getTurnDirection(road.turn.angle)};
+            return notificationOnModeChange(in_mode, out_mode, road.turn.angle, TurnType::Suppressed);
         }
     }
     BOOST_ASSERT(type == TurnType::Continue);

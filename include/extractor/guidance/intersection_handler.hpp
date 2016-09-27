@@ -61,6 +61,11 @@ class IntersectionHandler
     // turn angles.
     std::size_t findObviousTurn(const EdgeID via_edge, const Intersection &intersection) const;
 
+    TurnInstruction notificationOnModeChange(const TravelMode in_mode,
+                                             const TravelMode out_mode,
+                                             const double turnAngle,
+                                             const TurnType::Enum alternative) const;
+
     // Obvious turns can still take multiple forms. This function looks at the turn onto a road
     // candidate when coming from a via_edge and determines the best instruction to emit.
     // `through_street` indicates if the street turned onto is a through sreet (think mergees and
